@@ -35,7 +35,7 @@
                  :hashbang       false
                  :language-in    :ecmascript5
                  :language-out   :ecmascript5
-                 :optimizations  :advanced
+                 :optimizations  :simple
                  :output-dir     "target/release-node"
                  :output-to      "target/release-node/datomish.bare.js"
                  :output-wrapper false
