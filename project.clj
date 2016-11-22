@@ -77,6 +77,29 @@
                  }
                 :notify-command ["release-browser/wrap_bare.sh"]}
 
+               :release-react-native
+               {
+                :source-paths   ["src/common" "src/node"]
+                :assert         false
+                :compiler
+                {
+                 ;; :externs specified in deps.cljs.
+                 :elide-asserts  true
+                 :hashbang       false
+                 :language-in    :ecmascript5
+                 :language-out   :ecmascript5-strict
+                 :optimizations  :simple
+                 :output-dir     "target/release-react-native"
+                 :output-to      "target/release-react-native/datomish.bare.js"
+                 :output-wrapper false
+                 :parallel-build true
+                 :pretty-print   true
+                 :pseudo-names   true
+                 :static-fns     true
+                 :target         :nodejs
+                 }
+                :notify-command ["release-react-native/wrap_bare.sh"]}
+
                :test
                {
                 :source-paths ["src/common" "src/node" "src/helpers" "test"]
