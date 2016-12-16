@@ -1,0 +1,5 @@
+[package]
+name = "datomish"
+version = "0.1.0"
+
+[dependencies]
