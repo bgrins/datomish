@@ -10,6 +10,16 @@
 
 extern crate clap;
 
+extern crate iron;
+extern crate staticfile;
+extern crate mount;
+use std::path::Path;
+
+use iron::Iron;
+use staticfile::Static;
+use mount::Mount;
+
+
 use clap::{App, Arg, SubCommand, AppSettings};
 
 fn main() {
@@ -41,5 +51,19 @@ fn main() {
                  matches.value_of("database").unwrap(),
                  matches.value_of("port").unwrap(),
                  debug);
+
+        let mut mount = Mount::new();
+
+        // Serve the shared JS/CSS at /
+        mount.mount("/", Static::new(Path::new("target/doc/")));
+        // Serve the static file docs at /doc/
+        mount.mount("/doc/", Static::new(Path::new("target/doc/mentat/")));
+        // Serve the source code at /src/
+        mount.mount("/src/", Static::new(Path::new("target/doc/src/staticfile/lib.rs.html")));
+
+        println!("Doc server running on http://localhost:3000/doc/");
+
+        Iron::new(mount).http("127.0.0.1:3000").unwrap();
+
     }
 }

@@ -1,17 +1,24 @@
 [package]
+authors = ["Richard Newman <rnewman@twinql.com>", "Nicholas Alexander <nalexander@mozilla.com>"]
 name = "mentat"
 version = "0.4.0"
-authors = ["Richard Newman <rnewman@twinql.com>", "Nicholas Alexander <nalexander@mozilla.com>"]
 
 [dependencies]
-rusqlite = "0.8.0"
 clap = "2.19.3"
+iron = "0.4.0"
+mount = "0.2.1"
+rusqlite = "0.8.0"
+staticfile = "0.3.1"
+
+[[bin]]
+name = "main"
+doc = false
 
 [dependencies.edn]
-  path = "edn"
+path = "edn"
 
 [dependencies.mentat_query]
-  path = "query"
+path = "query"
 
 [dependencies.mentat_query_parser]
-  path = "query-parser"
+path = "query-parser"
