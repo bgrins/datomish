@@ -41,7 +41,7 @@ use mentat_core::TypedValue;
 
 pub type SrcVarName = String;          // Do not include the required syntactic '$'.
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Variable(pub PlainSymbol);
 
 impl Variable {

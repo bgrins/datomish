@@ -12,6 +12,7 @@ use mentat_core::{
     Schema,
     TypedValue,
     ValueType,
+    intern_set,
 };
 
 use mentat_query::{
@@ -81,6 +82,7 @@ impl ConjoiningClauses {
         self.constrain_to_ref(&pattern.entity);
         self.constrain_to_ref(&pattern.attribute);
 
+        let mut temp_ids = intern_set::InternSet::new();
         let ref col = alias.1;
 
         match pattern.entity {
@@ -90,7 +92,7 @@ impl ConjoiningClauses {
                 // IS NOT NULL, because we don't store nulls in our schema.
                 (),
             PatternNonValuePlace::Variable(ref v) =>
-                self.bind_column_to_var(schema, col.clone(), DatomsColumn::Entity, v.clone()),
+                self.bind_column_to_var(schema, col.clone(), DatomsColumn::Entity, temp_ids.intern(v).inner),
             PatternNonValuePlace::Entid(entid) =>
                 self.constrain_column_to_entity(col.clone(), DatomsColumn::Entity, entid),
             PatternNonValuePlace::Ident(ref ident) => {
