@@ -8,6 +8,9 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
+#![allow(unused_imports)]
+#![allow(unused_variables)]
+
 extern crate clap;
 #[macro_use] extern crate nickel;
 
@@ -19,65 +22,54 @@ extern crate slog;
 extern crate slog_scope;
 extern crate slog_term;
 
-extern crate mentat;
-
 use clap::{App, Arg, SubCommand, AppSettings};
 use slog::DrainExt;
 
 use std::u16;
 use std::str::FromStr;
 
+extern crate time;
+
+extern crate mentat;
+extern crate mentat_db;
+
+use mentat::{new_connection, conn};
+
+use std::io::prelude::*;
+use std::fs::{File};
+
+// Steps for profiling:
+// * cargo build --release
+// * point profiler to target/release/mentat
 fn main() {
-    let app = App::new("Mentat").setting(AppSettings::ArgRequiredElseHelp);
-    let matches = app.subcommand(SubCommand::with_name("serve")
-            .about("Starts a server")
-            .arg(Arg::with_name("debug")
-                .long("debug")
-                .help("Print debugging info"))
-            .arg(Arg::with_name("database")
-                .short("d")
-                .long("database")
-                .value_name("FILE")
-                .help("Path to the Mentat database to serve")
-                .default_value("")
-                .takes_value(true))
-            .arg(Arg::with_name("port")
-                .short("p")
-                .long("port")
-                .value_name("INTEGER")
-                .help("Port to serve from, i.e. `localhost:PORT`")
-                .default_value("3333")
-                .takes_value(true)))
-        .get_matches();
-    if let Some(ref matches) = matches.subcommand_matches("serve") {
-        let debug = matches.is_present("debug");
-        let port = u16::from_str(matches.value_of("port").unwrap()).expect("Port must be an integer");
-        if debug {
-            println!("This doesn't do anything yet, but it will eventually serve up the following database: {} \
-                      on port: {}.",
-                     matches.value_of("database").unwrap(),
-                     matches.value_of("port").unwrap());
-        }
 
-        // Set up logging.
-        let log_level = if debug {
-            slog::Level::Debug
-        } else {
-            slog::Level::Warning
-        };
-        let term_logger = slog_term::streamer().build().fuse();
-        let log = slog::Logger::root(slog::LevelFilter::new(term_logger, log_level),
-                                     o!("version" => env!("CARGO_PKG_VERSION")));
-        slog_scope::set_global_logger(log);
+    let mut sqlite = new_connection("").unwrap();
+    let mut conn = conn::Conn::connect(&mut sqlite).unwrap();
 
-        info!("Serving database"; "database" => matches.value_of("database").unwrap(),
-                                  "port" => port,
-                                  "debug mode" => debug);
+    // Try to open relative to target/release/ for running profile, and also
+    // from project root for cargo run
+    let mut schema_file = match File::open("../../tests/music-schema.dtm") {
+        Ok(s) => s,
+        Err(why) => File::open("tests/music-schema.dtm").expect("Unable to open the file")
+    };
+    let mut schema_contents = String::new();
+    schema_file.read_to_string(&mut schema_contents).expect("Unable to read the file.  TODO: Please download them at <URL>");
+    let schema_transaction = conn.transact(&mut sqlite, schema_contents.as_str()).unwrap();
 
-        error!("Calling a function: {}", mentat::get_name());
+    // If you pull down the full dataset, you can replace the path here with
+    // tests/music-data.dtm.
+    let mut data_file = match File::open("../../tests/music-data-partial.dtm") {
+        Ok(s) => s,
+        Err(why) => File::open("tests/music-data-partial.dtm").expect("Unable to open the file")
+    };
+    let mut data_contents = String::new();
+    data_file.read_to_string(&mut data_contents).expect("Unable to read the file.  TODO: Please download them at <URL>");
+    let data_transaction = conn.transact(&mut sqlite, data_contents.as_str()).unwrap();
 
-        let mut server = Nickel::new();
-        server.get("/", middleware!("This doesn't do anything yet"));
-        server.listen(("127.0.0.1", port)).expect("Failed to launch server");
-    }
+    let results = conn.q_once(&mut sqlite,
+        r#"[:find ?name
+        :where
+        [?p :artist/name ?name]]"#, None)
+    .expect("Query failed");
+    println!("{:?}", results);
 }
